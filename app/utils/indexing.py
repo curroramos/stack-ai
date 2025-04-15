@@ -1,5 +1,6 @@
 import math
 from typing import List, Tuple, Optional, Callable, Dict
+from app.models import Chunk
 
 def euclidean_distance(a: List[float], b: List[float]) -> float:
     return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
@@ -63,6 +64,14 @@ class KDTreeIndex:
         else:
             node.right = self._insert(node.right, point, chunk_id, depth + 1)
         return node
+    
+    def rebuild(self, chunk_map: Dict[str, Chunk]):
+        self.root = None
+        self.k = None
+        self.chunk_ids.clear()
+
+        for chunk_id, chunk in chunk_map.items():
+            self.add_vector(chunk.embedding, chunk_id)
 
     def search(self, query: List[float], k: int) -> List[Tuple[str, float]]:
         best = []  # list of (distance, chunk_id)

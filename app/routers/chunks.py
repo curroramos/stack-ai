@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from uuid import uuid4
 from datetime import datetime, timezone
-from app.models.base import Chunk, ChunkInput, ChunkMetadata
+from app.models.chunk_models import Chunk, ChunkInput
+from app.models.metadata_models import ChunkMetadata
 from app.core.db import db
 from app.utils.embeddings import get_embedding
 
@@ -120,11 +121,11 @@ def delete_chunk(library_id: str, document_id: str, chunk_id: str):
     if len(document.chunks) == original_length:
         raise HTTPException(status_code=404, detail="Chunk not found")
 
+    # remove or reindex
     if hasattr(library.index, "remove_vector"):
         library.index.remove_vector(chunk_id)
     else:
-        # Fallback: rebuild index if necessary
-        library.index.rebuild([(c.embedding, c.id) for d in library.documents for c in d.chunks])
+        library.index.rebuild(library.chunk_map)
 
     db.update_library(library)
     return {"detail": "Chunk deleted"}

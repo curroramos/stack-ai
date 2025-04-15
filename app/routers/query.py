@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Literal
-from app.core.db import db  
+from app.core.db import db
 from app.utils.embeddings import get_embedding
 from app.utils.indexing import cosine_similarity, euclidean_distance
-from app.models.base import Library, QueryRequest, QueryResult
+from app.models import QueryRequest, QueryResult
 
 router = APIRouter()
 

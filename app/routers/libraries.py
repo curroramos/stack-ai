@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone
-from app.models.base import Library, LibraryCreate, LibraryResponse, LibraryMetadata
+from app.models.library_models import Library, LibraryCreate, LibraryResponse
+from app.models.metadata_models import LibraryMetadata
 from app.core.db import db
 
 router = APIRouter(prefix="/libraries", tags=["libraries"])

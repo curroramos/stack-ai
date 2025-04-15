@@ -3,7 +3,7 @@ from uuid import uuid4
 from typing import List
 from datetime import datetime, timezone
 from app.core.db import db
-from app.models.base import Document, DocumentMetadata
+from app.models import Document, DocumentMetadata
 
 router = APIRouter(prefix="/libraries/{library_id}/documents", tags=["documents"])
 

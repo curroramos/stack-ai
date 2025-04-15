@@ -1,6 +1,6 @@
 from threading import RLock
 from typing import Dict
-from app.models.base import Library
+from app.models.library_models import Library
 
 class InMemoryDB:
     def __init__(self):
