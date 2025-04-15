@@ -3,7 +3,6 @@ import logging
 from fastapi.testclient import TestClient
 from app.main import app
 
-# Set up basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -39,10 +38,12 @@ def test_chunk_index_add_delete_and_query(test_library, test_document):
     # Add multiple chunks
     chunk_texts = [
         "banana fruit salad",
-        "apple pie recipe",
-        "formula mathematics",
+        "apple",
+        "mathematics",
         "car repair manual",
-        "quantum physics introduction"
+        "quantum physics introduction", 
+        "orange", 
+        "watermelon"
     ]
     chunk_ids = []
     for text in chunk_texts:
@@ -60,9 +61,9 @@ def test_chunk_index_add_delete_and_query(test_library, test_document):
     # Perform a search for something fruit-related
     query_payload = {
         "library_id": library_id,
-        "query_text": "fruit smoothie",
+        "query_text": "fruit",
         "k": 3,
-        "distance_metric": "cosine"
+        "distance_metric": "euclidean"
     }
     logger.info(f"Performing query: {query_payload}")
     query_resp = client.post("/query", json=query_payload)

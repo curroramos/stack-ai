@@ -1,20 +1,30 @@
 from fastapi import APIRouter, HTTPException
-from app.models.base import Library, LibraryCreate, LibraryResponse
+from datetime import datetime, timezone
+from app.models.base import Library, LibraryCreate, LibraryResponse, LibraryMetadata
 from app.core.db import db
 
 router = APIRouter(prefix="/libraries", tags=["libraries"])
 
+def now_iso():
+    return datetime.now(timezone.utc).isoformat()
+
 @router.post("/", response_model=LibraryResponse)
 def create_library(library_data: LibraryCreate):
-    library = Library(name=library_data.name, metadata=library_data.metadata)
+    meta_dict = library_data.metadata.model_dump() if library_data.metadata else {}
+
+    meta_dict["created_at"] = now_iso()
+
+    metadata = LibraryMetadata(**meta_dict)
+
+    library = Library(name=library_data.name, metadata=metadata)
     db.add_library(library)
+
     return LibraryResponse(
         id=library.id,
         name=library.name,
         documents=library.documents,
         metadata=library.metadata
     )
-
 @router.get("/", response_model=list[LibraryResponse])
 def list_libraries():
     libraries = db.list_libraries()
@@ -47,7 +57,12 @@ def update_library(library_id: str, updated_data: LibraryCreate):
         raise HTTPException(status_code=404, detail="Library not found")
 
     library.name = updated_data.name
-    library.metadata = updated_data.metadata or {}
+
+    if updated_data.metadata:
+        # Safely prepare updated metadata, preserving existing created_at
+        new_meta = updated_data.metadata.model_dump()
+        new_meta["created_at"] = library.metadata.created_at if library.metadata and library.metadata.created_at else now_iso()
+        library.metadata = LibraryMetadata(**new_meta)
 
     db.update_library(library)
 

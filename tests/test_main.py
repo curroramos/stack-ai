@@ -10,36 +10,57 @@ client = TestClient(app)
 def test_library():
     return {
         "name": "Test Library",
-        "metadata": {"owner": "tester"}
+        "metadata": {
+            "created_by": "tester",
+            "use_case": "unit-testing",
+            "access_level": "private"
+        }
     }
 
 @pytest.fixture
 def test_document():
     return {
         "title": "Test Doc",
-        "metadata": {"doc_type": "article"}
+        "metadata": {
+            "category": "research",
+            "source_type": "manual",
+            "tags": ["nlp", "test"]
+        }
     }
 
 @pytest.fixture
 def test_chunk_input():
     return {
         "text": "Hello world test chunk",
-        "metadata": {"type": "text"}
+        "metadata": {
+            "source": "unit-test",
+            "author": "tester",
+            "language": "en"
+        }
     }
 
 @pytest.fixture
 def updated_library():
     return {
         "name": "Updated Library",
-        "metadata": {"owner": "updated"}
+        "metadata": {
+            "created_by": "updated_user",
+            "use_case": "updated-case",
+            "access_level": "restricted"
+        }
     }
 
 @pytest.fixture
 def updated_chunk_input():
     return {
         "text": "Updated chunk text",
-        "metadata": {"type": "text", "updated": True}
+        "metadata": {
+            "source": "unit-test-updated",
+            "author": "updated_tester",
+            "language": "en"
+        }
     }
+
 
 # ------------------------------
 # Library Tests

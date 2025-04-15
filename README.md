@@ -11,6 +11,13 @@ decision: when to index - index incrementally each time a chunk is added/updated
 
 
 
+Strategy	Task-Valid	Easy	Scalable	Consistent	Comment
+index.add_vector() inline	✅	✅	⚠️	✅	Good start
+Rebuild index after changes	✅	✅	✅	✅✅	Even safer
+Library model owns its index	✅	✅	✅	✅	Cleaner design
+Async / queue-based indexing	❌ (overkill)	⚠️	✅✅	✅✅	Out of scope
+
+
 Library model pydantic index field -> problem. solved using librarycreate and libraryresponse models
 
 in the search results. i want to get the chunk content, not the chunk id
@@ -71,3 +78,7 @@ Create the logic to do the CRUD operations on libraries and documents/chunks. En
 Implement an API layer on top of that logic to let users interact with the vector database.
 
 Create a **docker image** for the project and a **helmchart** to install it in a kubernetes cluster like minikube. 
+
+Rebuilding the KD-Tree after a deletion (or batch of deletions) is the most reasonable trade-off, it avoids the complexity of maintaining balance and keeps the code easy to reason about.
+
+created_at field in metadata is automated 

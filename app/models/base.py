@@ -4,27 +4,45 @@ from fastapi import Query
 from uuid import uuid4
 from app.utils.indexing import LinearIndex
 
+class ChunkMetadata(BaseModel):
+    source: Optional[str] = None
+    created_at: Optional[str] = None
+    author: Optional[str] = None
+    language: Optional[str] = None
+
+class DocumentMetadata(BaseModel):
+    category: Optional[str] = None
+    created_at: Optional[str] = None
+    source_type: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+class LibraryMetadata(BaseModel):
+    created_by: Optional[str] = None
+    created_at: Optional[str] = None
+    use_case: Optional[str] = None
+    access_level: Optional[Literal["private", "public", "restricted"]] = "private"
+
 class Chunk(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     text: str
     embedding: List[float]
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[ChunkMetadata] = None
 
 class ChunkInput(BaseModel):
     text: str
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[ChunkMetadata] = None
 
 class Document(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     title: str
     chunks: List[Chunk] = Field(default_factory=list)
-    metadata: Optional[Dict[str, str]] = None
-
+    metadata: Optional[DocumentMetadata] = None
+    
 class Library(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
     documents: List[Any] = Field(default_factory=list)
-    metadata: Optional[Dict[str, str]] = None
+    metadata: Optional[LibraryMetadata] = None
     index: LinearIndex = Field(default_factory=LinearIndex, exclude=True)
     chunk_map: Dict[str, Chunk] = Field(default_factory=dict)
 
@@ -39,19 +57,18 @@ class Library(BaseModel):
 
 class LibraryCreate(BaseModel):
     name: str
-    metadata: Optional[Dict[str, str]] = None
+    metadata: Optional[LibraryMetadata] = None
 
 class LibraryResponse(BaseModel):
     id: str
     name: str
     documents: List[Any]
-    metadata: Optional[Dict[str, str]] = None
-
-
+    metadata: Optional[LibraryMetadata] = None
+    
 class QueryRequest(BaseModel):
     library_id: str
     query_text: str
-    k: int = Query(default=5, ge=1)
+    k: int = Field(default=5, ge=1)
     distance_metric: Literal["euclidean", "cosine"] = "euclidean"
 
 class QueryResult(BaseModel):
