@@ -73,6 +73,10 @@ Implement two or three indexing algorithms, do not use external libraries, we wa
 
 Implement the necessary data structures/algorithms to ensure that there are no **data races** between reads and writes to the database. Explain your design choices.
 
+
+
+
+
 Create the logic to do the CRUD operations on libraries and documents/chunks. Ensure **data consistency and integrity** during these operations.
 
 Implement an API layer on top of that logic to let users interact with the vector database.

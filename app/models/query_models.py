@@ -1,5 +1,6 @@
 from typing import Literal
 from pydantic import BaseModel, Field
+from app.models.metadata_models import ChunkMetadata
 
 class QueryRequest(BaseModel):
     library_id: str
@@ -10,4 +11,5 @@ class QueryRequest(BaseModel):
 class QueryResult(BaseModel):
     chunk_id: str
     score: float
-    chunk_content: str  # or some subset of chunk fields
+    text: str
+    metadata: ChunkMetadata

@@ -1,20 +1,20 @@
-from typing import List, Optional, Literal
+from typing import List, Literal
 from pydantic import BaseModel
 
 class ChunkMetadata(BaseModel):
-    source: Optional[str] = None
-    created_at: Optional[str] = None
-    author: Optional[str] = None
-    language: Optional[str] = None
+    source: str
+    created_at: str
+    author: str
+    language: str
 
 class DocumentMetadata(BaseModel):
-    category: Optional[str] = None
-    created_at: Optional[str] = None
-    source_type: Optional[str] = None
-    tags: Optional[List[str]] = None
+    category: str
+    created_at: str
+    source_type: str
+    tags: List[str]
 
 class LibraryMetadata(BaseModel):
-    created_by: Optional[str] = None
-    created_at: Optional[str] = None
-    use_case: Optional[str] = None
-    access_level: Optional[Literal["private", "public", "restricted"]] = "private"
+    created_by: str
+    created_at: str
+    use_case: str
+    access_level: Literal["private", "public", "restricted"] = "private"

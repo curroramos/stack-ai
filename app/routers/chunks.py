@@ -3,7 +3,7 @@ from uuid import uuid4
 from datetime import datetime, timezone
 from app.models.chunk_models import Chunk, ChunkInput
 from app.models.metadata_models import ChunkMetadata
-from app.core.db import db
+from app.core.db import db  # InMemoryDB instance
 from app.utils.embeddings import get_embedding
 
 router = APIRouter(
@@ -20,12 +20,11 @@ def add_chunk(library_id: str, document_id: str, chunk_input: ChunkInput):
     if not library:
         raise HTTPException(status_code=404, detail="Library not found")
 
-    document = next((doc for doc in library.documents if str(doc.id) == document_id), None)
+    document = library.documents.get(document_id)
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
     embedding = get_embedding(chunk_input.text)
-
     metadata = ChunkMetadata(**chunk_input.metadata.model_dump()) if chunk_input.metadata else ChunkMetadata()
     metadata.created_at = now_iso()
 
@@ -36,10 +35,13 @@ def add_chunk(library_id: str, document_id: str, chunk_input: ChunkInput):
         metadata=metadata
     )
 
-    document.chunks.append(new_chunk)
-    library.add_chunk(new_chunk)
-    
-    db.update_library(library)
+    library.chunk_map[new_chunk.id] = new_chunk
+    document.chunk_ids.append(new_chunk.id)  
+
+    indexing_service = db.get_indexing_service(library_id)
+    if not indexing_service:
+        raise HTTPException(status_code=500, detail="Indexing service not initialized for this library")
+    indexing_service.add_chunk(new_chunk)
 
     return new_chunk
 
@@ -49,11 +51,11 @@ def list_chunks(library_id: str, document_id: str):
     if not library:
         raise HTTPException(status_code=404, detail="Library not found")
 
-    document = next((doc for doc in library.documents if str(doc.id) == document_id), None)
+    document = library.documents.get(document_id)
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    return document.chunks
+    return [library.chunk_map[chunk_id] for chunk_id in document.chunk_ids]
 
 @router.get("/{chunk_id}")
 def get_chunk(library_id: str, document_id: str, chunk_id: str):
@@ -61,11 +63,14 @@ def get_chunk(library_id: str, document_id: str, chunk_id: str):
     if not library:
         raise HTTPException(status_code=404, detail="Library not found")
 
-    document = next((doc for doc in library.documents if str(doc.id) == document_id), None)
+    document = library.documents.get(document_id)
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    chunk = next((c for c in document.chunks if str(c.id) == chunk_id), None)
+    if chunk_id not in document.chunk_ids:
+        raise HTTPException(status_code=404, detail="Chunk not found")
+
+    chunk = library.chunk_map.get(chunk_id)
     if not chunk:
         raise HTTPException(status_code=404, detail="Chunk not found")
 
@@ -77,16 +82,16 @@ def update_chunk(library_id: str, document_id: str, chunk_id: str, chunk_input: 
     if not library:
         raise HTTPException(status_code=404, detail="Library not found")
 
-    document = next((doc for doc in library.documents if str(doc.id) == document_id), None)
+    document = library.documents.get(document_id)
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    chunk_index = next((i for i, c in enumerate(document.chunks) if str(c.id) == chunk_id), -1)
-    if chunk_index == -1:
-        raise HTTPException(status_code=404, detail="Chunk not found")
+    # Validate chunk belongs to the document
+    if chunk_id not in document.chunk_ids:
+        raise HTTPException(status_code=404, detail="Chunk not found in document")
 
+    # Update metadata
     embedding = get_embedding(chunk_input.text)
-
     metadata = ChunkMetadata(**chunk_input.metadata.model_dump()) if chunk_input.metadata else ChunkMetadata()
     metadata.created_at = now_iso()
 
@@ -97,9 +102,16 @@ def update_chunk(library_id: str, document_id: str, chunk_id: str, chunk_input: 
         metadata=metadata
     )
 
-    document.chunks[chunk_index] = updated_chunk
+    # Replace chunk in chunk_map
     library.chunk_map[chunk_id] = updated_chunk
-    library.index.update_vector(chunk_id, embedding) if hasattr(library.index, "update_vector") else None
+
+    # Update index
+    indexing_service = db.get_indexing_service(library_id)
+    if hasattr(indexing_service.strategy, "update_vector"):
+        indexing_service.strategy.update_vector(chunk_id, embedding)
+    else:
+        indexing_service.remove_chunk(chunk_id)
+        indexing_service.add_chunk(updated_chunk)
 
     db.update_library(library)
     return updated_chunk
@@ -110,22 +122,26 @@ def delete_chunk(library_id: str, document_id: str, chunk_id: str):
     if not library:
         raise HTTPException(status_code=404, detail="Library not found")
 
-    document = next((doc for doc in library.documents if str(doc.id) == document_id), None)
+    document = library.documents.get(document_id)
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    original_length = len(document.chunks)
-    document.chunks = [c for c in document.chunks if str(c.id) != chunk_id]
+    # Check if the chunk is actually in the document
+    if chunk_id not in document.chunk_ids:
+        raise HTTPException(status_code=404, detail="Chunk not found in document")
+
+    # Remove chunk ID reference from document
+    document.chunk_ids.remove(chunk_id)
+
+    # Remove from chunk_map
     library.chunk_map.pop(chunk_id, None)
 
-    if len(document.chunks) == original_length:
-        raise HTTPException(status_code=404, detail="Chunk not found")
+    # Remove from index
+    indexing_service = db.get_indexing_service(library_id)
+    if indexing_service:
+        indexing_service.remove_chunk(chunk_id)
 
-    # remove or reindex
-    if hasattr(library.index, "remove_vector"):
-        library.index.remove_vector(chunk_id)
-    else:
-        library.index.rebuild(library.chunk_map)
-
+    # Update the library
     db.update_library(library)
+
     return {"detail": "Chunk deleted"}

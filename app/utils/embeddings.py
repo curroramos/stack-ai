@@ -14,9 +14,6 @@ HEADERS = {
 }
 
 def get_embedding(text: str) -> List[float]:
-    """
-    Send a single text string to Cohere's API and return the embedding.
-    """
     if not COHERE_API_KEY:
         raise ValueError("Cohere API key is not set. Please set COHERE_API_KEY in your environment.")
 

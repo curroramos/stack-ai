@@ -1,34 +1,6 @@
-import math
 from typing import List, Tuple, Optional, Callable, Dict
 from app.models import Chunk
-
-def euclidean_distance(a: List[float], b: List[float]) -> float:
-    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
-
-def cosine_similarity(a: List[float], b: List[float]) -> float:
-    dot = sum(x*y for x, y in zip(a, b))
-    norm_a = math.sqrt(sum(x**2 for x in a))
-    norm_b = math.sqrt(sum(y**2 for y in b))
-    return dot / (norm_a * norm_b)
-
-class LinearIndex:
-    def __init__(self, distance_fn: Callable[[List[float], List[float]], float] = euclidean_distance):
-        self.vectors: Dict[str, List[float]] = {}  # chunk_id -> vector
-        self.distance_fn = distance_fn
-
-    def add_vector(self, vector: List[float], chunk_id: str):
-        self.vectors[chunk_id] = vector  # Overwrite if chunk_id exists
-
-    def remove_vector(self, chunk_id: str):
-        self.vectors.pop(chunk_id, None)
-
-    def search(self, query: List[float], k: int) -> List[Tuple[str, float]]:
-        distances = []
-        for cid, vec in self.vectors.items():
-            dist = self.distance_fn(query, vec)
-            distances.append((cid, dist))
-        distances.sort(key=lambda x: x[1])
-        return distances[:k]
+from app.utils.similarity import euclidean_distance, cosine_similarity
 
 class KDNode:
     def __init__(self, point: List[float], chunk_id: str, depth: int = 0,

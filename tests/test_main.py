@@ -1,7 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-import uuid
 
 client = TestClient(app)
 
@@ -12,6 +11,7 @@ def test_library():
         "name": "Test Library",
         "metadata": {
             "created_by": "tester",
+            "created_at": "2023-04-01T12:00:00Z",
             "use_case": "unit-testing",
             "access_level": "private"
         }
@@ -23,6 +23,7 @@ def test_document():
         "title": "Test Doc",
         "metadata": {
             "category": "research",
+            "created_at": "2023-04-01T12:30:00Z",
             "source_type": "manual",
             "tags": ["nlp", "test"]
         }
@@ -34,6 +35,7 @@ def test_chunk_input():
         "text": "Hello world test chunk",
         "metadata": {
             "source": "unit-test",
+            "created_at": "2023-04-01T12:45:00Z",
             "author": "tester",
             "language": "en"
         }
@@ -45,6 +47,7 @@ def updated_library():
         "name": "Updated Library",
         "metadata": {
             "created_by": "updated_user",
+            "created_at": "2023-04-02T12:00:00Z",
             "use_case": "updated-case",
             "access_level": "restricted"
         }
@@ -56,6 +59,7 @@ def updated_chunk_input():
         "text": "Updated chunk text",
         "metadata": {
             "source": "unit-test-updated",
+            "created_at": "2023-04-02T12:15:00Z",
             "author": "updated_tester",
             "language": "en"
         }

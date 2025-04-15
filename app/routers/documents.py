@@ -28,7 +28,7 @@ def create_document(library_id: str, document: Document):
     document.metadata = DocumentMetadata(**meta_dict)
 
     document.id = str(uuid4())
-    library.documents.append(document)
+    library.documents[document.id] = document
     db.update_library(library)
 
     return document
