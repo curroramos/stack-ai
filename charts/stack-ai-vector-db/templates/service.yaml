@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-vector-db
+  name: stack-ai-vector-db
 spec:
   type: ClusterIP
   selector:
-    app: my-vector-db
+    app: stack-ai-vector-db
   ports:
     - port: 8000
       targetPort: 8000

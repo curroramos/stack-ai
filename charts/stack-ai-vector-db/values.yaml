@@ -1,5 +1,5 @@
 image:
-  repository: my-docker-repo/my-vector-db
+  repository: franciscoramos3010/stack-ai-vector-db
   tag: "latest"
   pullPolicy: IfNotPresent
 

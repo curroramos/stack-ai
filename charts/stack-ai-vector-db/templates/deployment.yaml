@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-vector-db
+  name: stack-ai-vector-db
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: my-vector-db
+      app: stack-ai-vector-db
   template:
     metadata:
       labels:
-        app: my-vector-db
+        app: stack-ai-vector-db
     spec:
       containers:
-      - name: my-vector-db
-        image: "my-docker-repo/my-vector-db:latest"
+      - name: stack-ai-vector-db
+        image: "franciscoramos3010/stack-ai-vector-db:latest"
         ports:
         - containerPort: 8000

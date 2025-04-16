@@ -1,123 +1,14 @@
+##  Project Overview
 
+This project provides a **REST API** for managing a custom in-memory **vector database** with semantic search capabilities.
 
-do i need to have and api CRUD for documents? or just add when a chunk document is new
+Users can:
+- **Create, read, update, and delete** libraries
+- **Add and manage documents** within each library
+- **Add, update, and remove chunks** from documents
 
+Chunks (text + metadata) are automatically vectorized and stored. Each library maintains its own index (e.g., **Linear** or **KD-Tree**) over its chunks, enabling **k-nearest neighbor (k-NN)** search for semantically similar content.
 
-linear index, vs KD index. complexity
-
-
-decision: when to index - index incrementally each time a chunk is added/updated
-                        - reindex all each time """
-
-
-
-Strategy	Task-Valid	Easy	Scalable	Consistent	Comment
-index.add_vector() inline	✅	✅	⚠️	✅	Good start
-Rebuild index after changes	✅	✅	✅	✅✅	Even safer
-Library model owns its index	✅	✅	✅	✅	Cleaner design
-Async / queue-based indexing	❌ (overkill)	⚠️	✅✅	✅✅	Out of scope
-
-
-Library model pydantic index field -> problem. solved using librarycreate and libraryresponse models
-
-in the search results. i want to get the chunk content, not the chunk id
-
-it’s better to keep just the chunk_id in the index, and maintain a separate map of chunk_id → Chunk data. This keeps the index lightweight and provides O(1) lookups for chunk content. A recommended approach is:
-
-    Store the chunk’s embedding in your vector index with the chunk_id as a key.
-
-    Maintain a separate dictionary (e.g. chunk_map) on the Library, keyed by chunk_id, containing the full Chunk.
-
-    When you retrieve top matches from the index, you can quickly get the chunk content by looking up the chunk_id in the chunk_map.
-
-
-TODO
-fix: chunk should come with the document_id. 
-fix dictionary document_id: list[Chunks] anywhere in memory
-
-
-fix 
-
-```py
-@router.post("/")
-def add_chunk(library_id: str, document_id: str, chunk_input: ChunkInput):
-    library = db.get_library(library_id)
-    if not library:
-        raise HTTPException(status_code=404, detail="Library not found")
-
-    document = next((doc for doc in library.documents if str(doc.id) == document_id), None)
-    if not document:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    embedding = get_embedding(chunk_input.text)
-
-    new_chunk = Chunk(
-        id=str(uuid4()),
-        text=chunk_input.text,
-        embedding=embedding,
-        metadata=chunk_input.metadata or {}
-    )
-
-    document.chunks.append(new_chunk) # where is this going?
-    library.add_chunk(new_chunk)
-    
-    db.update_library(library) # update library in memory after applying changes
-
-
-    return new_chunk
-```
-
-
-
-Implement the necessary data structures/algorithms to ensure that there are no **data races** between reads and writes to the database. Explain your design choices.
-
-
-
-
-
-Create the logic to do the CRUD operations on libraries and documents/chunks. Ensure **data consistency and integrity** during these operations.
-
-Implement an API layer on top of that logic to let users interact with the vector database.
-
-Create a **docker image** for the project and a **helmchart** to install it in a kubernetes cluster like minikube. 
-
-
-
-
-
-Rebuilding the KD-Tree after a deletion (or batch of deletions) is the most reasonable trade-off, it avoids the complexity of maintaining balance and keeps the code easy to reason about.
-
-created_at field in metadata is automated 
-
-
-
-No Data Races:
-
-Using RLock in InMemoryDB methods ensures safe concurrent access.
-
-Indexing service updates are also wrapped.
-
-Logical access patterns avoid shared mutable state.
-
-
-
-
-
-Nice work wrapping up the project! For your **documentation and technical choices section in the README**, you’ll want to clearly communicate what you built, why you made certain decisions, and how someone can understand, run, and evaluate your work. Here's a structured outline you can use:
-
----
-
-## 📄 Project Overview
-
-Briefly summarize:
-- What the project does (index/query documents with a vector DB via a REST API).
-- Core components: Libraries → Documents → Chunks with embeddings.
-- Technologies used: FastAPI, Pydantic, Docker, Helm, Kubernetes, etc.
-
-
-
-
----
 
 ## Technical Architecture & Choices
 
@@ -135,7 +26,6 @@ Briefly summarize:
       embedding: List[float]
       metadata: Optional[ChunkMetadata]
   ```
-- **Why**: This separation ensures that each text segment can be independently indexed and retrieved with rich metadata (e.g. author, language, timestamp).
 
 #### 2. **Document**
 - **Definition**: A `Document` is a logical grouping of chunks.
@@ -147,7 +37,7 @@ Briefly summarize:
       chunk_ids: List[str]
       metadata: Optional[DocumentMetadata]
   ```
-- **Why**: By storing only `chunk_ids`, the document remains lightweight and allows modular access to underlying chunks stored in the library.
+-  By storing only `chunk_ids`, the document remains lightweight and allows modular access to underlying chunks stored in the library.
 
 #### 3. **Library**
 - **Definition**: A `Library` is a top-level collection of documents + centralized chunk storage + index.
@@ -161,10 +51,10 @@ Briefly summarize:
       index: LinearIndex
       metadata: Optional[LibraryMetadata]
   ```
-- **Why**:
-  - Provides fast lookup (`chunk_map`)
-  - Maintains consistency through encapsulated `add/update/remove` operations
-  - Supports indexing via `LinearIndex` and enables k-NN search
+
+- Provides fast lookup (`chunk_map`)
+- Maintains consistency through encapsulated `add/update/remove` operations
+- Supports indexing via `LinearIndex` and enables k-NN search
 
 
 
@@ -334,41 +224,36 @@ In this project, both indexes are fully rebuilt after chunk deletions or updates
 
 
 
-### ADD POSTMAN LIBRARY
+### ADD POSTMAN COLLECTION
 
 ---
 
-## 🐳 Docker & Kubernetes
 
-Explain:
-- How to build and run the Docker container.
-- Helm chart overview: what configs are in `values.yaml`.
-- How to deploy in Minikube (step-by-step if needed).
 
----
 
 ## 🧪 Testing
 
-Mention:
-- What tests were written (`tests/test_*.py`).
-- Framework used (pytest).
-- How to run tests: `pytest`
-
----
+- **Test Files**:  
+  - `tests/test_main.py` – covers CRUD operations for libraries, documents, and chunks.  
+  - `tests/test_query.py` – tests vector indexing and query behavior (add, delete, search).  
+- **Framework**: [pytest](https://docs.pytest.org/)  
+- **Run tests**:  
+  ```bash
+  pytest
+  ```
 
 ##  Optional Enhancements
 
-- data persistence
+- Data persistence
 
----
 
 ## 🚀 Getting Started
 
 Instructions:
 ```bash
 # Clone repo
-git clone <your-repo>
-cd <your-repo>
+git clone https://github.com/curroramos/stack-ai
+cd stack-ai
 
 # Install dependencies
 pip install -r requirements.txt
@@ -380,8 +265,135 @@ uvicorn app.main:app --reload
 pytest
 ```
 
-Add any Helm or Docker run instructions here too.
+## 🐳 Docker & Kubernetes
 
+This project is containerized and can be deployed using [Helm](https://helm.sh) on a local Kubernetes cluster powered by [Minikube](https://minikube.sigs.k8s.io/).
+
+### 🛠 Prerequisites
+
+Make sure the following tools are installed on your system:
+
+- [Docker](https://www.docker.com/)
+- [Minikube](https://minikube.sigs.k8s.io/)
+- [Helm](https://helm.sh/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+
+---
+
+### 📦 1. Start Minikube
+
+```bash
+minikube start
+```
+
+(Optional) Launch the Kubernetes dashboard:
+
+```bash
+minikube dashboard
+```
+
+### 🐋 2. Build and Push Docker Image
+
+Build and push the image to Docker Hub (already done):
+
+```bash
+docker build -t stack-ai-vector-db:latest .
+docker tag stack-ai-vector-db:latest franciscoramos3010/stack-ai-vector-db:latest
+docker push franciscoramos3010/stack-ai-vector-db:latest
+```
+
+> 🔁 Replace `franciscoramos3010` with your Docker Hub username if needed.
+
+---
+
+### 📦 3. Helm Chart Structure
+
+Ensure the Helm chart directory is structured as follows:
+
+```
+charts/
+└── stack-ai-vector-db/
+    ├── Chart.yaml
+    ├── values.yaml
+    └── templates/
+        ├── deployment.yaml
+        └── service.yaml
+```
+
+---
+
+### ⚙️ 4. Update `values.yaml`
+
+In `charts/stack-ai-vector-db/values.yaml`, set:
+
+```yaml
+image:
+  repository: franciscoramos3010/stack-ai-vector-db
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort  # or ClusterIP if you're using Ingress instead
+  port: 8000
+```
+
+---
+
+### 📦 5. Deploy with Helm
+
+From the root of your project, install the chart:
+
+```bash
+helm install stack-ai-vector-db charts/stack-ai-vector-db
+```
+
+To apply updates:
+
+```bash
+helm upgrade stack-ai-vector-db charts/stack-ai-vector-db
+```
+
+---
+
+### 🌐 6. Access the API
+
+To access the API:
+
+#### Option A: Use `minikube service` (for local clusters)
+
+```bash
+minikube service stack-ai-vector-db
+```
+
+This opens your browser to:
+
+```
+http://<minikube-ip>:<node-port>/docs
+```
+
+#### Option B: Get NodePort manually
+
+```bash
+kubectl get svc stack-ai-vector-db
+```
+
+Then open:
+```
+http://<minikube-ip>:<node-port>/docs
+```
+
+---
+
+### ✅ 7. Verify Deployment
+
+Check if everything's running:
+
+```bash
+kubectl get pods
+kubectl logs <your-pod-name>
+```
+
+---
 
 ## 📚 Future Improvements
 
