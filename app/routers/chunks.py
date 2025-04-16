@@ -44,6 +44,8 @@ def add_chunk(library_id: str, document_id: str, chunk_input: ChunkInput):
         raise HTTPException(status_code=500, detail="Indexing service not initialized for this library")
     indexing_service.add_chunk(new_chunk)
 
+    db.update_library(library)
+
     return new_chunk
 
 @router.get("/")
