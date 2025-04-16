@@ -116,55 +116,40 @@ class LinearIndex:
 ```
 
 
-#### 2. **KD-Tree Index**
+#### 2. Clustered Index (Flat Clustering, e.g., k-means-lite)
 
-- **Time Complexity**:
-  - Insert: **O(log n)** (average), **O(n)** (worst case if unbalanced)
-  - Search: **O(log n)** (best), **O(n)** (worst)
-- **Space Complexity**: **O(n)** for the tree structure
-- **Use Case**: Spatial partitioning for faster k-NN in lower dimensions.
-- **Tradeoffs**:
-  - Better than linear search for balanced, low-dimensional data (ideal < 20D)
-  - Degrades in high dimensions (curse of dimensionality), no balancing logic
-  - Rebuilding needed after bulk updates
+Time Complexity:
 
+    Insert: O(1) per chunk (after initial centroid selection)
+
+    Search: O(p·m) per query, where p = probe_clusters, m = avg vectors per cluster
+
+    Rebuild: O(n·k) for full dataset re-index (n = total chunks, k = num_clusters)
+
+Space Complexity:
+
+    O(n·d + k·d), where d = embedding dimension, k = num_clusters
+
+Use Case:
+Faster search over medium/large datasets by partitioning the space and limiting brute-force to top N clusters.
+
+Tradeoffs:
+
+    Good balance between speed and accuracy
+
+    Works reasonably well in medium-to-high dimensions
+
+    Cluster assignment is greedy — no centroid updates (not full k-means)
+
+    No automatic reclustering — requires manual rebuild() call
 ```python
-class KDTreeIndex:
-    def search(self, query: List[float], k: int) -> List[Tuple[str, float]]:
-        best = []  # list of (distance, chunk_id)
-
-        def _search(node: Optional[KDNode], depth: int):
-            if node is None:
-                return
-
-            dist = self.distance_fn(query, node.point)
-            if len(best) < k:
-                best.append((dist, node.chunk_id))
-                best.sort()
-            elif dist < best[-1][0]:
-                best[-1] = (dist, node.chunk_id)
-                best.sort()
-
-            axis = depth % self.k
-            next_branch = None
-            opposite_branch = None
-
-            if query[axis] < node.point[axis]:
-                next_branch = node.left
-                opposite_branch = node.right
-            else:
-                next_branch = node.right
-                opposite_branch = node.left
-
-            _search(next_branch, depth + 1)
-
-            if len(best) < k or abs(query[axis] - node.point[axis]) < best[-1][0]:
-                _search(opposite_branch, depth + 1)
-
-        _search(self.root, 0)
-        return [(cid, dist) for dist, cid in best]
+class ClusteredIndex:
+    def search(self, query: List[float], k: int, probe_clusters: int = 2) -> List[Tuple[str, float]]:
+        # Step 1: find N closest clusters
+        cluster_dists = [(i, self.distance_fn(query, c)) for i, c in enumerate(self.centroids)]
+        cluster_dists.sort(key=lambda x: x[1])
+        top_clusters = [i for i, _ in cluster_dists[:probe_clusters]]
 ```
-
 
 ### Tradeoffs
 
