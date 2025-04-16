@@ -104,14 +104,11 @@ def update_chunk(library_id: str, document_id: str, chunk_id: str, chunk_input: 
 
     # Replace chunk in chunk_map
     library.chunk_map[chunk_id] = updated_chunk
-
-    # Update index
+    
+    # Rebuild with updated chunk
     indexing_service = db.get_indexing_service(library_id)
-    if hasattr(indexing_service.strategy, "update_vector"):
-        indexing_service.strategy.update_vector(chunk_id, embedding)
-    else:
-        indexing_service.remove_chunk(chunk_id)
-        indexing_service.add_chunk(updated_chunk)
+    if indexing_service:
+        indexing_service.rebuild_index(library.chunk_map)
 
     db.update_library(library)
     return updated_chunk
@@ -136,10 +133,10 @@ def delete_chunk(library_id: str, document_id: str, chunk_id: str):
     # Remove from chunk_map
     library.chunk_map.pop(chunk_id, None)
 
-    # Remove from index
+    # Rebuild without deleted chunk
     indexing_service = db.get_indexing_service(library_id)
     if indexing_service:
-        indexing_service.remove_chunk(chunk_id)
+        indexing_service.rebuild_index(library.chunk_map)
 
     # Update the library
     db.update_library(library)

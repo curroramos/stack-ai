@@ -86,3 +86,13 @@ Create a **docker image** for the project and a **helmchart** to install it in a
 Rebuilding the KD-Tree after a deletion (or batch of deletions) is the most reasonable trade-off, it avoids the complexity of maintaining balance and keeps the code easy to reason about.
 
 created_at field in metadata is automated 
+
+
+
+No Data Races:
+
+Using RLock in InMemoryDB methods ensures safe concurrent access.
+
+Indexing service updates are also wrapped.
+
+Logical access patterns avoid shared mutable state.

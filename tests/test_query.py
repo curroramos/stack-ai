@@ -57,7 +57,7 @@ def test_document():
 
 def test_chunk_index_add_delete_and_query(test_library, test_document, fruit_chunks):
     logger.info("Creating library")
-    lib_resp = client.post("/libraries/", json=test_library)
+    lib_resp = client.post("/libraries?index_type=kdtree", json=test_library)
     assert lib_resp.status_code == 200, f"Failed to create library: {lib_resp.text}"
     library_id = lib_resp.json()["id"]
 
@@ -84,6 +84,7 @@ def test_chunk_index_add_delete_and_query(test_library, test_document, fruit_chu
     assert query_resp.status_code == 200, f"Query failed: {query_resp.text}"
     results_before_delete = query_resp.json()
     returned_ids_before = [res["chunk_id"] for res in results_before_delete]
+    logger.info(f"Search Results (before delete): {results_before_delete}")
 
     # Delete top hit
     chunk_to_delete = returned_ids_before[0]
@@ -96,5 +97,5 @@ def test_chunk_index_add_delete_and_query(test_library, test_document, fruit_chu
     assert query_resp_after.status_code == 200, f"Query after delete failed: {query_resp_after.text}"
     results_after_delete = query_resp_after.json()
     returned_ids_after = [res["chunk_id"] for res in results_after_delete]
-
     assert chunk_to_delete not in returned_ids_after, "Deleted chunk still appears in query results"
+    logger.info(f"Search Results (after delete): {results_after_delete}")
