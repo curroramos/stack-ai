@@ -82,6 +82,11 @@ class LibraryMetadata(BaseModel):
     created_at: str
     use_case: str
     access_level: Literal["private", "public", "restricted"] = "private"
+    index_type: IndexType
+
+class IndexType(str, Enum):
+    LINEAR = "linear"
+    CLUSTERED = "clustered"
 ```
 
 
