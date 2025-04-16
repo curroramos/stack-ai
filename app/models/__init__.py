@@ -4,7 +4,7 @@ from .metadata_models import (
     LibraryMetadata
 )
 from .chunk_models import Chunk, ChunkInput
-from .document_models import Document
+from .document_models import Document, DocumentInput
 from .library_models import (
     Library,
     LibraryCreate,
@@ -22,6 +22,7 @@ __all__ = [
     "Chunk",
     "ChunkInput",
     "Document",
+    "DocumentInput",
     "Library",
     "LibraryCreate",
     "LibraryResponse",

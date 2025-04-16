@@ -31,6 +31,7 @@ def add_chunk(library_id: str, document_id: str, chunk_input: ChunkInput):
     new_chunk = Chunk(
         id=str(uuid4()),
         text=chunk_input.text,
+        document_id=document_id,
         embedding=embedding,
         metadata=metadata
     )
@@ -98,6 +99,7 @@ def update_chunk(library_id: str, document_id: str, chunk_id: str, chunk_input: 
     updated_chunk = Chunk(
         id=chunk_id,
         text=chunk_input.text,
+        document_id=document_id,
         embedding=embedding,
         metadata=metadata
     )

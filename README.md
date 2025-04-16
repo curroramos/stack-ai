@@ -21,10 +21,15 @@ Chunks (text + metadata) are automatically vectorized and stored. Each library m
 - **Model**:
   ```python
   class Chunk(BaseModel):
-      id: str
+      id: str = Field(default_factory=lambda: str(uuid4()))
       text: str
+      document_id: str
       embedding: List[float]
-      metadata: Optional[ChunkMetadata]
+      metadata: Optional[ChunkMetadata] = None
+
+  class ChunkInput(BaseModel):
+      text: str
+      metadata: Optional[ChunkMetadata] = None
   ```
 
 #### 2. **Document**
@@ -32,10 +37,15 @@ Chunks (text + metadata) are automatically vectorized and stored. Each library m
 - **Model**:
   ```python
   class Document(BaseModel):
-      id: str
+      id: str = Field(default_factory=lambda: str(uuid4()))
       title: str
-      chunk_ids: List[str]
-      metadata: Optional[DocumentMetadata]
+      library_id: str
+      chunk_ids: List[str] = Field(default_factory=list)
+      metadata: Optional[DocumentMetadata] = None
+
+  class DocumentInput(BaseModel):
+      title: str
+      metadata: Optional[DocumentMetadata] = None
   ```
 -  By storing only `chunk_ids`, the document remains lightweight and allows modular access to underlying chunks stored in the library.
 

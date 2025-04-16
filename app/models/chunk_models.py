@@ -6,6 +6,7 @@ from .metadata_models import ChunkMetadata
 class Chunk(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     text: str
+    document_id: str
     embedding: List[float]
     metadata: Optional[ChunkMetadata] = None
 

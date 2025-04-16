@@ -3,7 +3,7 @@ from uuid import uuid4
 from typing import List
 from datetime import datetime, timezone
 from app.core.db import db
-from app.models import Document, DocumentMetadata
+from app.models import Document, DocumentMetadata, DocumentInput
 
 router = APIRouter(prefix="/libraries/{library_id}/documents", tags=["documents"])
 
@@ -11,23 +11,25 @@ def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
 @router.post("/", response_model=Document)
-def create_document(library_id: str, document: Document):
+def create_document(library_id: str, document_input: DocumentInput):
     library = db.get_library(library_id)
     if not library:
         raise HTTPException(status_code=404, detail="Library not found")
 
-    # Normalize metadata
-    if isinstance(document.metadata, dict):
-        meta_dict = document.metadata
-    elif document.metadata:
-        meta_dict = document.metadata.model_dump()
-    else:
-        meta_dict = {}
-
+    meta_dict = (
+        document_input.metadata.model_dump()
+        if document_input.metadata
+        else {}
+    )
     meta_dict.setdefault("created_at", now_iso())
-    document.metadata = DocumentMetadata(**meta_dict)
 
-    document.id = str(uuid4())
+    document = Document(
+        id=str(uuid4()),
+        title=document_input.title,
+        library_id=library_id,
+        metadata=DocumentMetadata(**meta_dict),
+    )
+
     library.documents[document.id] = document
     db.update_library(library)
 
@@ -53,8 +55,8 @@ def get_document(library_id: str, document_id: str):
     return document
 
 
-@router.put("/{document_id}")
-def update_document(library_id: str, document_id: str, updated_doc: Document):
+@router.put("/{document_id}", response_model=Document)
+def update_document(library_id: str, document_id: str, updated_doc_input: DocumentInput):
     library = db.get_library(library_id)
     if not library:
         raise HTTPException(status_code=404, detail="Library not found")
@@ -63,13 +65,21 @@ def update_document(library_id: str, document_id: str, updated_doc: Document):
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    # Preserve existing chunk_ids and document ID
-    updated_doc.id = document_id
-    updated_doc.chunk_ids = document.chunk_ids
-
-    meta_dict = updated_doc.metadata.model_dump() if updated_doc.metadata else {}
+    # Normalize and merge metadata
+    meta_dict = (
+        updated_doc_input.metadata.model_dump()
+        if updated_doc_input.metadata
+        else {}
+    )
     meta_dict.setdefault("created_at", document.metadata.created_at if document.metadata else now_iso())
-    updated_doc.metadata = DocumentMetadata(**meta_dict)
+
+    updated_doc = Document(
+        id=document_id,
+        title=updated_doc_input.title,
+        library_id=document.library_id,
+        chunk_ids=document.chunk_ids,
+        metadata=DocumentMetadata(**meta_dict),
+    )
 
     library.documents[document_id] = updated_doc
     db.update_library(library)
