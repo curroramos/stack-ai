@@ -100,6 +100,55 @@ def test_get_update_delete_library(test_library, updated_library):
     assert del_resp.status_code == 200
     assert del_resp.json()["detail"] == "Deleted"
 
+
+# ------------------------------
+# Document Tests
+# ------------------------------
+def test_crud_document(test_library, test_document):
+    # Create library
+    lib_resp = client.post("/libraries/", json=test_library)
+    library_id = lib_resp.json()["id"]
+
+    # Create document
+    doc_resp = client.post(f"/libraries/{library_id}/documents/", json=test_document)
+    assert doc_resp.status_code == 200
+    doc_data = doc_resp.json()
+    document_id = doc_data["id"]
+    assert doc_data["title"] == test_document["title"]
+
+    # List documents
+    list_resp = client.get(f"/libraries/{library_id}/documents/")
+    assert list_resp.status_code == 200
+    docs = list_resp.json()
+    assert any(d["id"] == document_id for d in docs)
+
+    # Get specific document
+    get_resp = client.get(f"/libraries/{library_id}/documents/{document_id}")
+    assert get_resp.status_code == 200
+    assert get_resp.json()["id"] == document_id
+
+    # Update document
+    updated_doc = {
+        "id": document_id,
+        "title": "Updated Doc Title",
+        "metadata": {
+            "category": "updated-research",
+            "created_at": "2023-04-05T00:00:00Z",
+            "source_type": "automated",
+            "tags": ["ai", "update"]
+        },
+        "chunk_ids": []
+    }
+    put_resp = client.put(f"/libraries/{library_id}/documents/{document_id}", json=updated_doc)
+    assert put_resp.status_code == 200
+    assert put_resp.json()["title"] == updated_doc["title"]
+
+    # Delete document
+    del_resp = client.delete(f"/libraries/{library_id}/documents/{document_id}")
+    assert del_resp.status_code == 200
+    assert del_resp.json()["detail"] == f"Document {document_id} and its chunks deleted"
+
+
 # ------------------------------
 # Chunk Tests
 # ------------------------------
