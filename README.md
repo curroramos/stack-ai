@@ -7,7 +7,7 @@ Users can:
 - **Add and manage documents** within each library
 - **Add, update, and remove chunks** from documents
 
-Chunks (text + metadata) are automatically vectorized and stored. Each library maintains its own index (e.g., **Linear** or **KD-Tree**) over its chunks, enabling **k-nearest neighbor (k-NN)** search for semantically similar content.
+Chunks (text + metadata) are automatically vectorized and stored. Each library maintains its own index (e.g., **Linear** or **Clustered**) over its chunks, enabling **k-nearest neighbor (k-NN)** search for semantically similar content.
 
 
 ## Technical Architecture & Choices
