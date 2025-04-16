@@ -13,7 +13,8 @@ def test_library():
             "created_by": "tester",
             "created_at": "2023-04-01T12:00:00Z",
             "use_case": "unit-testing",
-            "access_level": "private"
+            "access_level": "private",
+            "index_type": "clustered"
         }
     }
 

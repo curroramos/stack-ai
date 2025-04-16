@@ -110,7 +110,6 @@ class LinearIndex:
         return distances[:k]
 ```
 
----
 
 #### 2. **KD-Tree Index**
 
@@ -161,7 +160,6 @@ class KDTreeIndex:
         return [(cid, dist) for dist, cid in best]
 ```
 
----
 
 ### Tradeoffs
 
@@ -191,6 +189,7 @@ In this project, both indexes are fully rebuilt after chunk deletions or updates
 
 
 ##  API Overview
+You can explore and test the API using this [Postman Collection](https://www.postman.com/curroramos/stack-ai/collection/up69kv0/stack-ai-vector-db?action=share&creator=37688986)
 
 ###  CRUD Libraries
 ####  `/libraries`
@@ -223,15 +222,7 @@ In this project, both indexes are fully rebuilt after chunk deletions or updates
   - Requires: `library_id`, `query_text`, `k` (number of neighbors), and optional `distance_metric` (e.g., cosine or euclidean).
 
 
-
-### ADD POSTMAN COLLECTION
-
----
-
-
-
-
-## 🧪 Testing
+## Testing
 
 - **Test Files**:  
   - `tests/test_main.py` – covers CRUD operations for libraries, documents, and chunks.  
@@ -239,8 +230,17 @@ In this project, both indexes are fully rebuilt after chunk deletions or updates
 - **Framework**: [pytest](https://docs.pytest.org/)  
 - **Run tests**:  
   ```bash
-  pytest
+  pytest -v
   ```
+
+Optionally, set `log_cli = true` to see test logs
+```ini
+[pytest]
+log_cli = false
+log_cli_level = INFO
+log_cli_format = %(asctime)s [%(levelname)s] %(name)s: %(message)s
+log_cli_date_format = %Y-%m-%d %H:%M:%S
+```
 
 ##  Optional Enhancements
 
@@ -262,7 +262,12 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 
 # Run tests
-pytest
+pytest -v
+```
+
+Create .env file in root folder and add
+```python
+COHERE_API_KEY=your_key
 ```
 
 ## 🐳 Docker & Kubernetes
@@ -278,7 +283,6 @@ Make sure the following tools are installed on your system:
 - [Helm](https://helm.sh/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 
----
 
 ### 📦 1. Start Minikube
 
@@ -302,9 +306,8 @@ docker tag stack-ai-vector-db:latest franciscoramos3010/stack-ai-vector-db:lates
 docker push franciscoramos3010/stack-ai-vector-db:latest
 ```
 
-> 🔁 Replace `franciscoramos3010` with your Docker Hub username if needed.
+>  Replace `franciscoramos3010` with your Docker Hub username if needed.
 
----
 
 ### 📦 3. Helm Chart Structure
 
@@ -320,9 +323,8 @@ charts/
         └── service.yaml
 ```
 
----
 
-### ⚙️ 4. Update `values.yaml`
+### 4. Update `values.yaml`
 
 In `charts/stack-ai-vector-db/values.yaml`, set:
 
@@ -337,7 +339,6 @@ service:
   port: 8000
 ```
 
----
 
 ### 📦 5. Deploy with Helm
 
@@ -353,9 +354,7 @@ To apply updates:
 helm upgrade stack-ai-vector-db charts/stack-ai-vector-db
 ```
 
----
-
-### 🌐 6. Access the API
+### 6. Access the API
 
 To access the API:
 
@@ -382,9 +381,8 @@ Then open:
 http://<minikube-ip>:<node-port>/docs
 ```
 
----
 
-### ✅ 7. Verify Deployment
+### 7. Verify Deployment
 
 Check if everything's running:
 
@@ -393,18 +391,10 @@ kubectl get pods
 kubectl logs <your-pod-name>
 ```
 
----
 
-## 📚 Future Improvements
+## Future Improvements
 
-You can list things like:
 - Better indexing algorithms.
 - Real database integration.
 - Full-text chunking + embedding pipeline.
-- Real user auth.
-
-
-
-
-## TODO
-add error handling
+- Real user auth and role management for library access

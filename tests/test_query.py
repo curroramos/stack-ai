@@ -39,7 +39,8 @@ def test_library():
             "created_by": "index-tester",
             "created_at": "2023-04-01T12:00:00Z",
             "use_case": "vector-search",
-            "access_level": "private"
+            "access_level": "private",
+            "index_type": "clustered"
         }
     }
 
@@ -57,7 +58,7 @@ def test_document():
 
 def test_chunk_index_add_delete_and_query(test_library, test_document, fruit_chunks):
     logger.info("Creating library")
-    lib_resp = client.post("/libraries?index_type=kdtree", json=test_library)
+    lib_resp = client.post("/libraries/", json=test_library)
     assert lib_resp.status_code == 200, f"Failed to create library: {lib_resp.text}"
     library_id = lib_resp.json()["id"]
 

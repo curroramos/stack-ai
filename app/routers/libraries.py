@@ -12,11 +12,12 @@ def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
 @router.post("/", response_model=LibraryResponse)
-def create_library(library_data: LibraryCreate, index_type: IndexType = Query(default=IndexType.LINEAR)):
+def create_library(library_data: LibraryCreate):
     meta_dict = library_data.metadata.model_dump() if library_data.metadata else {}
     meta_dict["created_at"] = now_iso()
     metadata = LibraryMetadata(**meta_dict)
 
+    index_type = meta_dict["index_type"] 
     library = Library(name=library_data.name, metadata=metadata)
     db.add_library(library, index_type=index_type)
 

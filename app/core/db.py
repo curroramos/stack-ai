@@ -31,7 +31,7 @@ class InMemoryDB:
         for lid, lib_data in raw.items():
             library = Library(**lib_data)
             self._libraries[lid] = library
-            strategy = create_index_by_type(IndexType.LINEAR)
+            strategy = create_index_by_type(lib_data["metadata"]["index_type"])
             indexing_service = IndexingService(strategy)
             indexing_service.rebuild_index(library.chunk_map)
             self._indexing_services[lid] = indexing_service
