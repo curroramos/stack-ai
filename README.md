@@ -102,8 +102,6 @@ class LibraryMetadata(BaseModel):
 
 
 ### Vector Indexing
-Here’s a cleaned-up and corrected version of your vector indexing section, keeping it concise and accurate:
-
 
 #### 1. **Linear Index (Brute-Force Search)**
 
