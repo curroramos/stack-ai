@@ -102,72 +102,79 @@ class IndexType(str, Enum):
 
 
 ### Vector Indexing
+Here’s a cleaned-up and corrected version of your vector indexing section, keeping it concise and accurate:
+
 
 #### 1. **Linear Index (Brute-Force Search)**
 
 - **Time Complexity**:
-  - Insert: **O(1)** per chunk
-  - Search: **O(n)** per query (where *n* = number of chunks)
-- **Space Complexity**: **O(n·d)** (where *d* = embedding dimension)
-- **Use Case**: Default fallback, simplest and most reliable for small-to-medium datasets.
+  - Insert: `O(1)` per chunk  
+  - Search: `O(n)` per query (n = total vectors)
+- **Space Complexity**: `O(n·d)` (d = embedding dimension)
+- **Use Case**: Small-to-medium datasets; deterministic and reliable.
 - **Tradeoffs**:
-  - Simple, deterministic, no preprocessing
-  - Doesn’t scale well for large datasets (slow search)
+  - Simple, no preprocessing
+  - Doesn’t scale — slow search on large datasets
 
 ```python
 class LinearIndex:
+    def __init__(self, distance_fn):
+        self.vectors = {}  # id -> vector
+        self.distance_fn = distance_fn
+
+    def insert(self, chunk_id: str, vector: List[float]):
+        self.vectors[chunk_id] = vector
+
     def search(self, query: List[float], k: int) -> List[Tuple[str, float]]:
-        distances = []
-        for cid, vec in self.vectors.items():
-            dist = self.distance_fn(query, vec)
-            distances.append((cid, dist))
+        distances = [(cid, self.distance_fn(query, vec)) for cid, vec in self.vectors.items()]
         distances.sort(key=lambda x: x[1])
         return distances[:k]
 ```
 
+#### 2. **Clustered Index (Flat Clustering, e.g., k-means-lite)**
 
-#### 2. Clustered Index (Flat Clustering, e.g., k-means-lite)
+- **Time Complexity**:
+  - Insert: `O(1)` (after initial clustering)
+  - Search: `O(p·m)` per query (p = probed clusters, m = avg vectors per cluster)
+  - Rebuild: `O(n·k)` (n = total vectors, k = number of clusters)
+- **Space Complexity**: `O(n·d + k·d)`
+- **Use Case**: Faster search on medium-to-large datasets
+- **Tradeoffs**:
+  - Faster than brute-force for large n
+  - Greedy cluster assignment (no centroid updates)
+  - Requires manual rebuild after updates/deletes
 
-Time Complexity:
-
-    Insert: O(1) per chunk (after initial centroid selection)
-
-    Search: O(p·m) per query, where p = probe_clusters, m = avg vectors per cluster
-
-    Rebuild: O(n·k) for full dataset re-index (n = total chunks, k = num_clusters)
-
-Space Complexity:
-
-    O(n·d + k·d), where d = embedding dimension, k = num_clusters
-
-Use Case:
-Faster search over medium/large datasets by partitioning the space and limiting brute-force to top N clusters.
-
-Tradeoffs:
-
-    Good balance between speed and accuracy
-
-    Works reasonably well in medium-to-high dimensions
-
-    Cluster assignment is greedy — no centroid updates (not full k-means)
-
-    No automatic reclustering — requires manual rebuild() call
 ```python
 class ClusteredIndex:
     def search(self, query: List[float], k: int, probe_clusters: int = 2) -> List[Tuple[str, float]]:
-        # Step 1: find N closest clusters
-        cluster_dists = [(i, self.distance_fn(query, c)) for i, c in enumerate(self.centroids)]
-        cluster_dists.sort(key=lambda x: x[1])
+        cluster_dists = sorted(((i, self.distance_fn(query, c)) for i, c in enumerate(self.centroids)), key=lambda x: x[1])
         top_clusters = [i for i, _ in cluster_dists[:probe_clusters]]
+
+        candidates = []
+        for idx in top_clusters:
+            for cid, vec in self.clusters[idx].items():
+                dist = self.distance_fn(query, vec)
+                candidates.append((cid, dist))
+
+        # fallback: if too few candidates, expand search
+        if len(candidates) < k:
+            for idx in range(len(self.clusters)):
+                if idx in top_clusters:
+                    continue
+                for cid, vec in self.clusters[idx].items():
+                    dist = self.distance_fn(query, vec)
+                    candidates.append((cid, dist))
+
+        candidates.sort(key=lambda x: x[1])
+        return candidates[:k]
 ```
 
-### Tradeoffs
 
-- **Linear Index**: Easy to implement, test, and debug. Guaranteed to work in all scenarios, regardless of data distribution or dimensionality.
-- **KD-Tree Index**: More efficient for low-dimension embeddings with static or moderately changing data. Offers insight into spatial indexing tradeoffs.
+#####  Notes
 
-
-In this project, both indexes are fully rebuilt after chunk deletions or updates for consistency and simplicity. While KD-Tree needs rebuilding to stay balanced, the Linear Index technically does not (its structure supports in-place updates efficiently). The unified rebuild strategy was chosen to reduce complexity and keep the indexing logic consistent across implementations.
+- **LinearIndex** is the baseline — robust, no assumptions.
+- **ClusteredIndex** improves query speed at the cost of accuracy and added complexity.
+- Both indexes require full rebuilds after updates/deletes for simplicity and consistency.
 
 ### Concurrency & Data Consistency
 
