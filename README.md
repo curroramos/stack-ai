@@ -58,8 +58,12 @@ Chunks (text + metadata) are automatically vectorized and stored. Each library m
       name: str
       documents: Dict[str, Document]
       chunk_map: Dict[str, Chunk]
-      index: LinearIndex
+      index: IndexType
       metadata: Optional[LibraryMetadata]
+
+  class IndexType(str, Enum):
+    LINEAR = "linear"
+    CLUSTERED = "clustered"
   ```
 
 - Provides fast lookup (`chunk_map`)
@@ -92,11 +96,7 @@ class LibraryMetadata(BaseModel):
     created_at: str
     use_case: str
     access_level: Literal["private", "public", "restricted"] = "private"
-    index_type: IndexType
 
-class IndexType(str, Enum):
-    LINEAR = "linear"
-    CLUSTERED = "clustered"
 ```
 
 
