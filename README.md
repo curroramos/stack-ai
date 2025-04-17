@@ -105,14 +105,18 @@ class LibraryMetadata(BaseModel):
 
 #### 1. **Linear Index (Brute-Force Search)**
 
-- **Time Complexity**:
-  - Insert: `O(1)` per chunk  
-  - Search: `O(n)` per query (n = total vectors)
-- **Space Complexity**: `O(n·d)` (d = embedding dimension)
-- **Use Case**: Small-to-medium datasets; deterministic and reliable.
-- **Tradeoffs**:
+- **Time Complexity:**
+  - **Insert:** `O(1)` per chunk  
+  - **Search:**  
+    - Distance computations: `O(n·d)`  
+    - Full sort: `O(n log n)`  
+    - **Total:** `O(n·d + n log n)`
+- **Space Complexity:** `O(n·d)` (n = number of vectors, d = embedding dimension)
+- **Use Case:** Small-to-medium datasets; deterministic and reliable.
+- **Tradeoffs:**
   - Simple, no preprocessing
-  - Doesn’t scale — slow search on large datasets
+  - Doesn’t scale — slow search on large datasets due to brute-force scan and sort
+
 
 ```python
 class LinearIndex:
