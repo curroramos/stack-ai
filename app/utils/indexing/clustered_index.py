@@ -43,17 +43,24 @@ class ClusteredIndex:
             self.add_vector(chunk.embedding, chunk_id)
 
     def search(self, query: List[float], k: int, probe_clusters: int = 2) -> List[Tuple[str, float]]:
-        # Step 1: find N closest clusters
         cluster_dists = [(i, self.distance_fn(query, c)) for i, c in enumerate(self.centroids)]
         cluster_dists.sort(key=lambda x: x[1])
         top_clusters = [i for i, _ in cluster_dists[:probe_clusters]]
 
-        # Step 2: brute-force search within those clusters
         candidates = []
         for idx in top_clusters:
             for cid, vec in self.clusters[idx].items():
                 dist = self.distance_fn(query, vec)
                 candidates.append((cid, dist))
+
+        if len(candidates) < k:
+            # fallback: brute force across all clusters
+            for idx in range(len(self.clusters)):
+                if idx in top_clusters:
+                    continue
+                for cid, vec in self.clusters[idx].items():
+                    dist = self.distance_fn(query, vec)
+                    candidates.append((cid, dist))
 
         candidates.sort(key=lambda x: x[1])
         return candidates[:k]
