@@ -174,7 +174,7 @@ class ClusteredIndex:
 
 - **LinearIndex** is the baseline — robust, no assumptions.
 - **ClusteredIndex** improves query speed at the cost of accuracy and added complexity.
-- Both indexes will be rebuildt after updates/deletes for simplicity and consistency.
+- Both indexes will be rebuildt when the entire dataset is refreshed or updated
 
 ### Concurrency & Data Consistency
 
