@@ -157,7 +157,6 @@ class LinearIndex:
 - **Tradeoffs**:
   - Faster than brute-force for large n
   - Greedy cluster assignment (no centroid updates)
-  - Requires manual rebuild after updates/deletes
 
 
 
@@ -230,7 +229,7 @@ class ClusteredIndex:
 
 - **LinearIndex** is the baseline — robust, no assumptions.
 - **ClusteredIndex** improves query speed at the cost of accuracy and added complexity.
-- Both indexes will be rebuildt when the entire dataset is refreshed or updated
+- Both indexes will be rebuildt when the entire dataset is refreshed
 
 ### Concurrency & Data Consistency
 
